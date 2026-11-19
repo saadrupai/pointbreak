@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "pointbreak",
+  "description": "Pointbreak: context memory and workflow for AI agents in microservice teams.",
+  "owner": {
+    "name": "Saad Rupai",
+    "url": "https://github.com/saadrupai"
+  },
+  "plugins": [
+    {
+      "name": "pointbreak",
+      "description": "Per-service context files, /pointbreak and /pointbreak-setup commands, a session-start hook and a Go MCP server for microservice workspaces.",
+      "version": "0.2.0",
+      "author": { "name": "Saad Rupai" },
+      "category": "development",
+      "source": "./",
+      "homepage": "https://github.com/saadrupai/pointbreak"
+    }
+  ]
+}

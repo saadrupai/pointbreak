@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pointbreak": {
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp-launch.sh"]
+    }
+  }
+}

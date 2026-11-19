@@ -1,0 +1,15 @@
+{
+  "description": "Pointbreak: at session start, tell the agent which microservice workspace and service it is in, and what is active today",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

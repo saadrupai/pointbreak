@@ -21,7 +21,7 @@ const instructions = "Pointbreak keeps per-service memory for a microservice wor
 	"Checkpoint with save_progress, finish with end_task. Use impact before changing an API, event, queue or table."
 
 func main() {
-	wsFlag := flag.String("workspace", "", "workspace root (default: $POINTBREAK_WORKSPACE, else the current directory)")
+	wsFlag := flag.String("workspace", "", "workspace root (default: $POINTBREAK_WORKSPACE, else the nearest parent with context/README.md, else the current directory)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *showVersion {
@@ -34,10 +34,11 @@ func main() {
 		root = os.Getenv("POINTBREAK_WORKSPACE")
 	}
 	if root == "" {
-		var err error
-		if root, err = os.Getwd(); err != nil {
+		cwd, err := os.Getwd()
+		if err != nil {
 			fail(err)
 		}
+		root = findWorkspace(cwd)
 	}
 	root, err := filepath.Abs(root)
 	if err != nil {
@@ -61,4 +62,19 @@ func main() {
 func fail(err error) {
 	fmt.Fprintln(os.Stderr, "pointbreak-mcp:", err)
 	os.Exit(1)
+}
+
+// findWorkspace walks up from dir to the nearest directory holding context/README.md,
+// so the server works when an agent is opened inside a service repo. Falls back to dir.
+func findWorkspace(dir string) string {
+	for d := dir; ; {
+		if _, err := os.Stat(filepath.Join(d, workspace.ContextDir, "README.md")); err == nil {
+			return d
+		}
+		parent := filepath.Dir(d)
+		if parent == d {
+			return dir
+		}
+		d = parent
+	}
 }

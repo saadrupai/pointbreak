@@ -92,25 +92,40 @@ Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempot
 
 ## Quick start
 
-```bash
-# 1. Build the server (Go 1.23+)
-go build -o ~/.local/bin/pointbreak-mcp ./cmd/pointbreak-mcp
+### Claude Code (plugin, one step)
 
-# 2. Add it to Claude Code for your workspace
-cd ~/work/yourco
-claude mcp add pointbreak -- pointbreak-mcp --workspace "$PWD"
+```
+/plugin install pointbreak --marketplace saadrupai/pointbreak
+```
 
-# 3. Install the commands
-mkdir -p .claude/commands
-cp /path/to/pointbreak/commands/*.md .claude/commands/
+Or add the marketplace first, then install:
 
-# 4. In Claude Code, run once:
+```
+/plugin marketplace add saadrupai/pointbreak
+/plugin install pointbreak@pointbreak
+```
+
+The plugin brings everything: `/pointbreak`, `/pointbreak-setup`, the `pointbreak` skill, the MCP server, and a session-start hook. Open Claude Code at your workspace root and run once:
+
+```
 /pointbreak-setup
 ```
 
-Other MCP clients: point them at `pointbreak-mcp --workspace /path/to/workspace` over stdio.
+The MCP server is built from source on first use (needs Go 1.23+), or uses `pointbreak-mcp` from your `PATH` if you installed it.
 
-No MCP? `./scripts/init.sh ~/work/yourco` creates the same `context/` folder, and the commands work with plain file reads.
+**The session-start hook** prints one short note when a session opens inside a Pointbreak workspace: which service you're in, what's active today, and anything left unfinished from earlier days. Outside a microservice workspace it prints nothing, so it costs no tokens there. In a folder with several repos but no `context/`, it suggests `/pointbreak-setup`.
+
+### Other MCP clients (Cursor, Codex, Antigravity, …)
+
+```bash
+go install github.com/saadrupai/pointbreak/cmd/pointbreak-mcp@latest
+```
+
+Point the client at `pointbreak-mcp` over stdio. It finds the workspace by walking up from its working directory to the nearest `context/README.md`, or takes `--workspace /path`. Copy `commands/*.md` wherever your client keeps prompts.
+
+### No MCP at all
+
+`./scripts/init.sh ~/work/yourco` creates the same `context/` folder; the commands work with plain file reads.
 
 ## Status and roadmap
 
@@ -118,8 +133,8 @@ No MCP? `./scripts/init.sh ~/work/yourco` creates the same `context/` folder, an
 |---|---|---|
 | 1 | Context spec, templates, `/pointbreak` and `/pointbreak-setup`, example workspace, init script | ✅ |
 | 2 | Go MCP server with 9 tools, tests | ✅ |
-| 3 | Claude Code plugin: one-step install, session-start hook that loads the service you're in | next |
-| 4 | `sync_database`: generate `database.md` from migrations (golang-migrate, goose, Prisma) | planned |
+| 3 | Claude Code plugin: one-step install, `pointbreak` skill, session-start hook | ✅ |
+| 4 | `sync_database`: generate `database.md` from migrations (golang-migrate, goose, Prisma) | next |
 
 ## Develop
 
@@ -133,6 +148,10 @@ go build -o bin/pointbreak-mcp ./cmd/pointbreak-mcp
 |---|---|
 | `templates/context/` | Templates (embedded in the binary) |
 | `commands/` | `/pointbreak` and `/pointbreak-setup` |
+| `skills/pointbreak/` | The skill that applies the workflow whenever you work in a Pointbreak workspace |
+| `hooks/` | Session-start hook |
+| `.claude-plugin/` | Plugin manifest, marketplace entry, icon |
+| `.mcp.json`, `scripts/mcp-launch.sh` | Starts the MCP server from the plugin |
 | `internal/workspace/` | Reading and writing `context/` |
 | `internal/mcp/` | Minimal stdio JSON-RPC MCP server |
 | `internal/tools/` | Tool definitions and annotations |
