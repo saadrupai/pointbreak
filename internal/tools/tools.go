@@ -199,6 +199,33 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			},
 		},
 		{
+			Name:        "sync_database",
+			Description: "Rebuild a database doc from migrations (golang-migrate, goose, plain SQL or a Prisma schema), read-only: tables, columns, types, nulls, defaults, keys, indexes, foreign keys, enums and a migration log, written between generated markers so human-written sections stay. Own database: pass service (migrations are found in its repo). Shared database: pass database, source and users (or [\"*\"] for every service); the schema goes to context/_db/<database>.md and each user service's database.md gets a block linking it, with the tables its code references.",
+			InputSchema: obj(map[string]any{
+				"service":          str("Service with its own database."),
+				"database":         str("Name of a database shared by several services, e.g. core."),
+				"source":           str("Migrations folder or schema.prisma, relative to the workspace root. Optional for own databases (found in the repo); required for shared."),
+				"users":            strs("Services using the shared database. [\"*\"] = all services. Optional after the first sync."),
+				"dry_run":          map[string]any{"type": "boolean", "description": "Preview the generated schema without writing."},
+				"replace_sections": map[string]any{"type": "boolean", "description": "For a hand-written doc without generated markers: replace only its Tables, Relations, Enums and Migration log sections."},
+			}),
+			Annotations: withTitle(writeIdempotent, "Sync database doc from migrations"),
+			Handler: func(raw json.RawMessage) (string, error) {
+				a, err := decode[struct {
+					Service         string   `json:"service"`
+					Database        string   `json:"database"`
+					Source          string   `json:"source"`
+					Users           []string `json:"users"`
+					DryRun          bool     `json:"dry_run"`
+					ReplaceSections bool     `json:"replace_sections"`
+				}](raw)
+				if err != nil {
+					return "", err
+				}
+				return ws.SyncDatabase(workspace.SyncInput{Service: a.Service, Database: a.Database, Source: a.Source, Users: a.Users, DryRun: a.DryRun, ReplaceSections: a.ReplaceSections})
+			},
+		},
+		{
 			Name:        "impact",
 			Description: "Before changing a contract, find everything that depends on it: rows in the system map (calls, events, queues, with their section) and lines in every service's architecture, database and features docs that mention the term. Pass an event subject, RPC, endpoint, queue, table or field.",
 			InputSchema: obj(map[string]any{"term": str("e.g. order.created, Payments.Refund, refunds, notify:send.")}, "term"),

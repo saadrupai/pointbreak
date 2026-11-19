@@ -87,6 +87,16 @@ The `pointbreak-mcp` server (Go, standard library only, single binary) exposes t
 | `task_status` | Today's tasks across services, stale entries flagged | no |
 | `search_logs` | Search past work across services | no |
 | `impact` | Every service and doc that depends on an event, RPC, table or field | no |
+| `sync_database` | Rebuild a database doc from migration files: tables, columns, keys, indexes, relations, enums, migration log | `context/` only |
+
+### Database docs that keep themselves current
+
+`sync_database` replays a service's migrations (golang-migrate, goose, plain SQL) or reads its Prisma schema and writes the result into `database.md`: every table with columns, types, nulls, defaults, keys, indexes, foreign keys and enums, plus a migration log, newest first. `ALTER`, `RENAME` and `DROP` are applied in order, so the doc shows the schema as it stands today.
+
+- **No database connection, ever.** It reads migration files only. No credentials, no drivers, nothing on the network. A test fails the build if a database or network package is ever imported.
+- **Human notes are safe.** Generated content lives between markers; ownership notes, data notes and anything else you write stay as written.
+- **Shared databases.** Each service can have its own database, several services can share one, or all can use the same one. A shared database is documented once in `context/_db/<name>.md` (with which service's code touches which tables), and each service's `database.md` links to it. `load_context` brings the shared doc along automatically.
+- Statements it doesn't understand are listed under "check by hand" instead of being guessed.
 
 Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), so hosts can show what is safe to run.
 
@@ -134,7 +144,7 @@ Point the client at `pointbreak-mcp` over stdio. It finds the workspace by walki
 | 1 | Context spec, templates, `/pointbreak` and `/pointbreak-setup`, example workspace, init script | ✅ |
 | 2 | Go MCP server with 9 tools, tests | ✅ |
 | 3 | Claude Code plugin: one-step install, `pointbreak` skill, session-start hook | ✅ |
-| 4 | `sync_database`: generate `database.md` from migrations (golang-migrate, goose, Prisma) | next |
+| 4 | `sync_database`: database docs from migrations, including shared databases | ✅ |
 
 ## Develop
 
@@ -153,6 +163,7 @@ go build -o bin/pointbreak-mcp ./cmd/pointbreak-mcp
 | `.claude-plugin/` | Plugin manifest, marketplace entry, icon |
 | `.mcp.json`, `scripts/mcp-launch.sh` | Starts the MCP server from the plugin |
 | `internal/workspace/` | Reading and writing `context/` |
+| `internal/dbschema/` | Migration replay and Prisma parsing (files only) |
 | `internal/mcp/` | Minimal stdio JSON-RPC MCP server |
 | `internal/tools/` | Tool definitions and annotations |
 | `cmd/pointbreak-mcp/` | The binary |

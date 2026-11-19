@@ -218,6 +218,15 @@ func (w *Workspace) LoadContext(o LoadOptions) (string, error) {
 	if len(o.Services) == 0 {
 		return "", errors.New("services is required: pass one or more service names")
 	}
+	var uniq []string
+	seen := map[string]bool{}
+	for _, s := range o.Services {
+		if !seen[s] {
+			seen[s] = true
+			uniq = append(uniq, s)
+		}
+	}
+	o.Services = uniq
 	want := map[string]bool{}
 	for _, f := range o.Files {
 		want[f] = true
@@ -252,10 +261,19 @@ func (w *Workspace) LoadContext(o LoadOptions) (string, error) {
 	if global {
 		add(filepath.Join(ContextDir, "global-architecture.md"))
 	}
+	sharedSeen := map[string]bool{}
 	for _, svc := range o.Services {
 		for _, f := range ServiceFiles {
 			if all || want[f] {
 				add(filepath.Join(ContextDir, svc, f))
+				if f == "database.md" {
+					for _, db := range w.sharedDocsFor(svc) {
+						if !sharedSeen[db] {
+							sharedSeen[db] = true
+							add(filepath.Join(ContextDir, SharedDir, db+".md"))
+						}
+					}
+				}
 			}
 		}
 		if all || want["log"] {

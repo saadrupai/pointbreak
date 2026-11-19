@@ -1,6 +1,6 @@
 # <service> — Database
 
-The service's data model as it stands. Source: migrations first, then a read-only look at the database if the team allows it. Mark anything unconfirmed `(unverified)`.
+The service's data model as it stands. Source: the migrations (or ORM schema file) only; no database connection. `sync_database` rebuilds the tables, relations, enums and migration log from them. Mark anything unconfirmed `(unverified)`.
 
 ## Engine
 - `<Postgres 16>` · database `<orders>` · schema `<public>`

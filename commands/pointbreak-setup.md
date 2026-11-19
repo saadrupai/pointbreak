@@ -25,7 +25,7 @@ Unless `--defaults` was passed, ask these in one question set (offer the default
 | Timezone for dates | the machine's timezone |
 | Ticket system | none |
 | API contract source | detect (`proto/`, `*.proto`, `openapi*.yaml`, a shared contracts repo) |
-| Read-only DB access for docs | no (migrations only) |
+| Database layout | each service has its own database / some services share one / all services share one |
 
 ## 3. Create the skeleton
 
@@ -51,7 +51,11 @@ Do one service at a time. For each, read in this order and stop when you have en
 Then fill:
 - `architecture.md` — every section that applies; delete the rest.
 - `features.md` — one line per feature with its entry point (endpoint, RPC, event consumer, cron).
-- `database.md` — tables with columns, types, nulls, defaults, indexes, relations and enums from the migrations, and a migration log, newest first.
+- `database.md` — if the Pointbreak MCP server is connected, call `sync_database` instead of writing it by hand:
+  - service with its own database: `sync_database(service: "<svc>")` (finds the migrations in the repo);
+  - database shared by some services: once, `sync_database(database: "<name>", source: "<folder with its migrations>", users: [<services>])`;
+  - one database for every service: `sync_database(database: "<name>", source: "…", users: ["*"])`.
+  It reads migration files only and never connects to a database. Without the MCP server, document tables, columns, indexes, relations, enums and a newest-first migration log from the migrations by hand.
 - `logs/<YYYY-MM>.md` — header only. Add one entry: `### branch: (setup) — Pointbreak context created`.
 - `temp.md` — `(none active)`.
 

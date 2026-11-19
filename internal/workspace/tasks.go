@@ -386,9 +386,21 @@ func (w *Workspace) appendToLog(svc, date string, lines []string) error {
 			inserted = true
 		}
 	}
-	if !inserted {
-		out = append(out, "", header)
-		out = append(out, lines...)
+	if !inserted { // no "---" separator (hand-edited file): put the newest day right after the title
+		out = nil
+		titled := false
+		for _, ln := range src {
+			out = append(out, ln)
+			if !titled && strings.HasPrefix(ln, "# ") {
+				out = append(out, "", header)
+				out = append(out, lines...)
+				out = append(out, "")
+				titled = true
+			}
+		}
+		if !titled {
+			out = append(append([]string{header}, lines...), append([]string{""}, src...)...)
+		}
 	}
 	text := strings.Join(collapseBlank(out), "\n") + "\n"
 	return os.WriteFile(path, []byte(text), 0o644)

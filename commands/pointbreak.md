@@ -9,7 +9,7 @@ Arguments: `$ARGUMENTS`
 
 Follow `context/README.md` as the team's rules for everything below.
 
-If the Pointbreak MCP tools are connected, use them instead of editing context files by hand: `load_context` (step 3, one call for all repos; pass `skip_rules: true` if `context/README.md` is already imported in `CLAUDE.md`), `start_task` (step 6), `save_progress` (plans and checkpoints), `end_task` (finish), `task_status` (status) and `impact` (before any contract change). If `context/README.md` is missing, say so and offer to create the `context/` folder from the Pointbreak templates. Do not continue the task without it.
+If the Pointbreak MCP tools are connected, use them instead of editing context files by hand: `load_context` (step 3, one call for all repos; pass `skip_rules: true` if `context/README.md` is already imported in `CLAUDE.md`), `start_task` (step 6), `save_progress` (plans and checkpoints), `end_task` (finish), `task_status` (status), `impact` (before any contract change) and `sync_database` (at `end`, when the task added a migration). If `context/README.md` is missing, say so and offer to create the `context/` folder from the Pointbreak templates. Do not continue the task without it.
 
 ## Pick the form
 

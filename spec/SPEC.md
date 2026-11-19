@@ -80,7 +80,8 @@ Sections in this order: Engine, Tables, Relations, Enums and status values, Data
 
 - One `### \`<table>\`` heading per table, each with a column table: Column, Type, Null, Default, Notes.
 - The migration log is newest first: Migration, Date, Change.
-- Generated content (from migrations or introspection) must not delete human-written lines under "Data notes".
+- Generated content comes from migration files or an ORM schema file only, never from a database connection. It lives between `<!-- pointbreak:generated:start … -->` and `<!-- pointbreak:generated:end -->`; everything outside those markers is human-owned and never rewritten.
+- A database shared by several services is documented once in `context/_db/<name>.md`; each service using it has a `<!-- pointbreak:shared-db:start … -->` block in its `database.md` that links it.
 
 ## Unverified facts
 

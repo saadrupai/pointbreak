@@ -59,8 +59,8 @@ func TestEveryToolDeclaresAllFourAnnotations(t *testing.T) {
 	s, _ := server(t)
 	resp := call(t, s, `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
 	list := resp["result"].(map[string]any)["tools"].([]any)
-	if len(list) != 9 {
-		t.Fatalf("got %d tools, want 9", len(list))
+	if len(list) != 10 {
+		t.Fatalf("got %d tools, want 10", len(list))
 	}
 	for _, x := range list {
 		tool := x.(map[string]any)

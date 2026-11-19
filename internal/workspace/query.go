@@ -146,6 +146,28 @@ func (w *Workspace) Impact(term string) (string, error) {
 		}
 	}
 
+	if entries, err := os.ReadDir(w.ctxPath(SharedDir)); err == nil {
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+				continue
+			}
+			data, err := os.ReadFile(w.ctxPath(SharedDir, e.Name()))
+			if err != nil {
+				continue
+			}
+			var lines []string
+			for i, ln := range strings.Split(string(data), "\n") {
+				if strings.Contains(strings.ToLower(ln), q) {
+					lines = append(lines, fmt.Sprintf("  %s:%d  %s", e.Name(), i+1, strings.TrimSpace(ln)))
+					n++
+				}
+			}
+			if len(lines) > 0 {
+				fmt.Fprintf(&b, "shared database %s (context/%s/%s):\n%s\n\n", strings.TrimSuffix(e.Name(), ".md"), SharedDir, e.Name(), strings.Join(lines, "\n"))
+			}
+		}
+	}
+
 	svcs, _ := w.Services()
 	for _, svc := range svcs {
 		var lines []string

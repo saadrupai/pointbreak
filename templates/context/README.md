@@ -75,7 +75,7 @@ One `## YYYY-MM-DD` header per day. One `### branch: <branch> — <title>` block
 - Facts in context files come from the repo's code, config, migrations and docs. Never invent them.
 - Anything you could not confirm gets `(unverified)` after it.
 - API contracts live in `<proto repo | OpenAPI spec | shared types package>`. Name the location in `global-architecture.md`.
-- Database facts come from migrations first, then a read-only look at the database if the team allows it.
+- Database facts come from migrations (or the ORM schema file) only. Pointbreak never connects to a database; it tracks the schema from the files that change it.
 
 ## 6. Rules for changing code (mandatory)
 
@@ -102,6 +102,5 @@ When a repo exists in the workspace without a `context/<service>/` folder, creat
 | Timezone for dates | `<e.g. Asia/Dhaka>` |
 | Ticket system | `<Jira | Linear | GitHub Issues | none>` |
 | API contract source | `<repo or path>` |
-| Read-only DB access allowed for docs | `<yes | no>` |
 
 Personal preferences (your git identity, model choice, tone) belong in your own agent settings, not in this shared folder.
