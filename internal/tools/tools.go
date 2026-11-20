@@ -10,14 +10,8 @@ import (
 	"github.com/saadrupai/pointbreak/internal/workspace"
 )
 
-var (
-	read = mcp.Annotations{ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false}
-	// Writes touch only context/ files. Nothing is deleted: end_task moves the task into the log.
-	writeIdempotent = mcp.Annotations{ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false}
-	writeAppend     = mcp.Annotations{ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: false, OpenWorldHint: false}
-)
-
-func withTitle(a mcp.Annotations, title string) mcp.Annotations { a.Title = title; return a }
+// Every tool spells out all four MCP annotations: writes touch only context/ files and nothing is
+// deleted (end_task moves a task into the log), so no tool is destructive or open-world.
 
 func obj(props map[string]any, required ...string) map[string]any {
 	s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
@@ -49,7 +43,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			Name:        "init_workspace",
 			Description: "Create the context/ folder: team rules, system map, and per-service temp.md, architecture.md, features.md, database.md and this month's log. With no services, every git repo in the workspace root is registered. Never overwrites existing files.",
 			InputSchema: obj(map[string]any{"services": strs("Service repo directory names. Omit to register every git repo in the workspace root.")}),
-			Annotations: withTitle(writeIdempotent, "Set up context folder"),
+			Annotations: mcp.Annotations{Title: "Set up context folder", ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Services []string `json:"services"`
@@ -71,7 +65,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			Name:        "list_services",
 			Description: "List registered services (with newest log month) and git repos in the workspace that have no context yet.",
 			InputSchema: obj(map[string]any{}),
-			Annotations: withTitle(read, "List services"),
+			Annotations: mcp.Annotations{Title: "List services", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler:     func(json.RawMessage) (string, error) { return ws.ListServices() },
 		},
 		{
@@ -84,7 +78,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"skip_rules":        map[string]any{"type": "boolean", "description": "Skip context/README.md (already in CLAUDE.md)."},
 				"include_standards": map[string]any{"type": "boolean", "description": "Add context/STANDARDS.md (TDD, clean code, contracts, migrations, security…). Use when planning or writing code; skip for questions."},
 			}, "services"),
-			Annotations: withTitle(read, "Load service context"),
+			Annotations: mcp.Annotations{Title: "Load service context", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Services      []string `json:"services"`
@@ -111,7 +105,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"inputs":       strs("Docs, designs, specs and prompts the task is based on."),
 				"also_touches": strs("Other services in this task."),
 			}, "service", "title"),
-			Annotations: withTitle(writeAppend, "Start task"),
+			Annotations: mcp.Annotations{Title: "Start task", ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: false, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Service     string   `json:"service"`
@@ -140,7 +134,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"decisions": str("Decisions made and why."),
 				"questions": str("Open questions."),
 			}, "service"),
-			Annotations: withTitle(writeAppend, "Save progress"),
+			Annotations: mcp.Annotations{Title: "Save progress", ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: false, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Service, Title, Plan, Done, Next, Decisions, Questions string
@@ -160,7 +154,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"title":    str("Which of today's tasks (part of its title). Omit for the latest."),
 				"summary":  strs("Short summary bullets: what changed, where, why, status. All details from temp.md are kept below them."),
 			}),
-			Annotations: withTitle(writeAppend, "End task"),
+			Annotations: mcp.Annotations{Title: "End task", ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: false, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Service  string   `json:"service"`
@@ -185,7 +179,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			Name:        "task_status",
 			Description: "Show today's active tasks across all services, with each task's latest Next step, and flag stale entries from earlier days.",
 			InputSchema: obj(map[string]any{}),
-			Annotations: withTitle(read, "Task status"),
+			Annotations: mcp.Annotations{Title: "Task status", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler:     func(json.RawMessage) (string, error) { return ws.Status() },
 		},
 		{
@@ -196,7 +190,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"services": strs("Limit to these services. Omit for all."),
 				"limit":    map[string]any{"type": "integer", "description": "Max matches (default 30, max 200)."},
 			}, "query"),
-			Annotations: withTitle(read, "Search work logs"),
+			Annotations: mcp.Annotations{Title: "Search work logs", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Query    string   `json:"query"`
@@ -220,7 +214,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 				"dry_run":          map[string]any{"type": "boolean", "description": "Preview the generated schema without writing."},
 				"replace_sections": map[string]any{"type": "boolean", "description": "For a hand-written doc without generated markers: replace only its Tables, Relations, Enums and Migration log sections."},
 			}),
-			Annotations: withTitle(writeIdempotent, "Sync database doc from migrations"),
+			Annotations: mcp.Annotations{Title: "Sync database doc from migrations", ReadOnlyHint: false, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Service         string   `json:"service"`
@@ -240,7 +234,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			Name:        "impact",
 			Description: "Before changing a contract, find everything that depends on it: rows in the system map (calls, events, queues, with their section) and lines in every service's architecture, database and features docs that mention the term. Pass an event subject, RPC, endpoint, queue, table or field.",
 			InputSchema: obj(map[string]any{"term": str("e.g. order.created, Payments.Refund, refunds, notify:send.")}, "term"),
-			Annotations: withTitle(read, "Find impact of a change"),
+			Annotations: mcp.Annotations{Title: "Find impact of a change", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
 					Term string `json:"term"`

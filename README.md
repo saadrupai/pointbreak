@@ -2,7 +2,7 @@
 
 **Shared memory and a one-command workflow for AI agents in microservice teams.**
 
-MIT · Go, zero dependencies · v0.3.0
+[![M8ven Score](https://m8ven.ai/badge/mcp/saadrupai-pointbreak-q4tjxg?v=36c805d833cfae7b25f2ab9843696263)](https://m8ven.ai/mcp/saadrupai-pointbreak-q4tjxg?s=readme) · MIT · Go, zero dependencies · v0.3.0
 
 Pointbreak grew out of daily use: the author runs this structure every working day on a production microservice codebase, where it keeps the work tracked by service, branch and date, holds context across sessions and cuts down repeated exploration. This repo turns that habit into a spec, templates, commands and tools any team can use.
 
