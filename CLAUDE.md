@@ -88,7 +88,7 @@ An open-core product for backend teams in microservice workspaces: a `context/` 
 - `bench/results/` is gitignored until the full benchmark is rerun after the usage limit resets.
 
 ## Next steps, in order
-1. Launch (owner said go, 2026-11-20): push + tag v0.3.0, check CI, M8ven claim, Agensi listing (free). LinkedIn post: show the draft and wait for the owner's approval before posting.
+1. Launch done 2026-11-20: v0.3.0 pushed + tagged; M8ven Verified Publisher (badge in README, keep it); Agensi listing submitted free (in review). LinkedIn post published 2026-11-20: https://www.linkedin.com/feed/update/urn:li:activity:7529558785229565953/ (links to GitHub, M8ven, Agensi live listing https://www.agensi.io/skills/pointbreak-microservice-context-workflow).
 2. Rerun the benchmark after the usage reset, publish method + results.
 3. GitHub Actions blocked: owner's GitHub account is locked for billing (jobs never start). CI badge removed from README on 2026-11-20; add it back (`[![ci](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml/badge.svg)](…/actions/workflows/ci.yml)`) once billing is fixed and a run is green.
 2. Phase 4: `sync_database` tool — parse migrations (golang-migrate `*.up.sql`, goose, Prisma) into `database.md` without touching "Data notes".
