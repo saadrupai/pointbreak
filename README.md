@@ -2,7 +2,7 @@
 
 **Shared memory and a one-command workflow for AI agents in microservice teams.**
 
-[![ci](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml/badge.svg)](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml) · MIT · Go, zero dependencies · v0.3.0
+MIT · Go, zero dependencies · v0.3.0
 
 Pointbreak grew out of daily use: the author runs this structure every working day on a production microservice codebase, where it keeps the work tracked by service, branch and date, holds context across sessions and cuts down repeated exploration. This repo turns that habit into a spec, templates, commands and tools any team can use.
 

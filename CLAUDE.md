@@ -90,6 +90,7 @@ An open-core product for backend teams in microservice workspaces: a `context/` 
 ## Next steps, in order
 1. Launch (owner said go, 2026-11-20): push + tag v0.3.0, check CI, M8ven claim, Agensi listing (free). LinkedIn post: show the draft and wait for the owner's approval before posting.
 2. Rerun the benchmark after the usage reset, publish method + results.
+3. GitHub Actions blocked: owner's GitHub account is locked for billing (jobs never start). CI badge removed from README on 2026-11-20; add it back (`[![ci](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml/badge.svg)](…/actions/workflows/ci.yml)`) once billing is fixed and a run is green.
 2. Phase 4: `sync_database` tool — parse migrations (golang-migrate `*.up.sql`, goose, Prisma) into `database.md` without touching "Data notes".
 3. Phase 5: first commit (owner must ask), GitHub repo `saadrupai/pointbreak`, claim on m8ven.ai (badge in README), Agensi listing (free core), LinkedIn post. Add the listings to the owner's published-listings notes.
 
