@@ -70,8 +70,8 @@ func TestInitCreatesAllAndNeverOverwrites(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(created) != 2+2*5 {
-		t.Fatalf("created %d files, want 12: %v", len(created), created)
+	if len(created) != 3+2*5 {
+		t.Fatalf("created %d files, want 13: %v", len(created), created)
 	}
 	if got := read(t, ws, "orders-svc/temp.md"); !strings.Contains(got, "# orders-svc — Current Task") || !strings.Contains(got, Idle) {
 		t.Errorf("temp.md not filled from template: %q", got)
@@ -157,7 +157,7 @@ func TestTaskLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	log := read(t, ws, "orders-svc/logs/2026-11.md")
-	if !strings.Contains(log, "## 2026-11-20\n### branch: feature/x — Partial refunds\n- Added refund limit\n- Tests pass") {
+	if !strings.Contains(log, "## 2026-11-20\n### branch: feature/x — Partial refunds\n- Summary:\n  - Added refund limit\n  - Tests pass\n- Ticket: ORD-142") {
 		t.Errorf("log entry wrong:\n%s", log)
 	}
 	temp = read(t, ws, "orders-svc/temp.md")
@@ -368,5 +368,70 @@ func TestStatusAndList(t *testing.T) {
 	}
 	if strings.Count(list, "(registered") != 3 {
 		t.Errorf("list:\n%s", list)
+	}
+}
+
+func TestEndKeepsAllDetailsAcrossServices(t *testing.T) {
+	ws := newWS(t, "2026-11-20 10:00", "orders-svc", "payments-svc", "notifications-svc")
+	if _, err := ws.Init(nil); err != nil {
+		t.Fatal(err)
+	}
+	for _, svc := range []string{"orders-svc", "payments-svc"} {
+		if _, err := ws.StartTask(StartInput{Service: svc, Title: "Partial refunds", Goal: "refund part of an order", AlsoTouches: []string{"orders-svc", "payments-svc"}}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := ws.SaveProgress(SaveInput{Service: svc, Plan: "step a\nstep b", Decisions: "count only non-failed refunds"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, err := ws.EndTaskIn([]string{"orders-svc", "payments-svc", "orders-svc"}, "refunds", []string{"Refund limit shipped"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Count(out, "Logged") != 2 {
+		t.Errorf("each service once:\n%s", out)
+	}
+	for _, svc := range []string{"orders-svc", "payments-svc"} {
+		log := read(t, ws, svc+"/logs/2026-11.md")
+		for _, want := range []string{"- Summary:\n  - Refund limit shipped", "- Goal: refund part of an order", "  - step a", "- Decisions: count only non-failed refunds", "- Checkpoint 10:00"} {
+			if !strings.Contains(log, want) {
+				t.Errorf("%s log missing %q:\n%s", svc, want, log)
+			}
+		}
+		if temp := read(t, ws, svc+"/temp.md"); !strings.Contains(temp, Idle) {
+			t.Errorf("%s temp.md not cleared:\n%s", svc, temp)
+		}
+	}
+	// one service without the task: reported, others still ended
+	if _, err := ws.StartTask(StartInput{Service: "orders-svc", Title: "Next"}); err != nil {
+		t.Fatal(err)
+	}
+	out, err = ws.EndTaskIn([]string{"orders-svc", "notifications-svc"}, "", nil)
+	if err != nil || !strings.Contains(out, "notifications-svc: not ended") || !strings.Contains(out, "orders-svc: Logged") {
+		t.Errorf("partial failure should be reported, not fatal: %v\n%s", err, out)
+	}
+	if _, err := ws.EndTaskIn([]string{"notifications-svc"}, "", nil); err == nil {
+		t.Error("when every service fails, end should return an error")
+	}
+}
+
+func TestStandardsLoadOnlyWhenAsked(t *testing.T) {
+	ws := kitebox(t)
+	plain, err := ws.LoadContext(LoadOptions{Services: []string{"orders-svc"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(plain, "<!-- context/STANDARDS.md -->") {
+		t.Error("standards must not load for everyday questions")
+	}
+	build, err := ws.LoadContext(LoadOptions{Services: []string{"orders-svc"}, SkipRules: true, Standards: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(build, "<!-- context/STANDARDS.md -->") || strings.Contains(build, "<!-- context/README.md -->") {
+		t.Error("include_standards should add STANDARDS.md even when the rules are skipped")
+	}
+	if !strings.Contains(build, "Test-driven development") {
+		t.Error("standards content missing")
 	}
 }

@@ -78,10 +78,11 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 			Name:        "load_context",
 			Description: "Load the memory needed to work on one or more services in one call, in a fixed order: team rules, system map (automatic for 2+ services), then per service architecture, database, features, today's temp.md and the newest monthly log. Use skip_rules when context/README.md is already imported in CLAUDE.md, and files to load only what the task needs.",
 			InputSchema: obj(map[string]any{
-				"services":       strs("Service names, e.g. [\"orders-svc\", \"payments-svc\"]."),
-				"files":          strs("Subset of: architecture.md, database.md, features.md, temp.md, log. Omit for all."),
-				"include_global": map[string]any{"type": "boolean", "description": "Force the system map on or off. Default: on for 2+ services."},
-				"skip_rules":     map[string]any{"type": "boolean", "description": "Skip context/README.md (already in CLAUDE.md)."},
+				"services":          strs("Service names, e.g. [\"orders-svc\", \"payments-svc\"]."),
+				"files":             strs("Subset of: architecture.md, database.md, features.md, temp.md, log. Omit for all."),
+				"include_global":    map[string]any{"type": "boolean", "description": "Force the system map on or off. Default: on for 2+ services."},
+				"skip_rules":        map[string]any{"type": "boolean", "description": "Skip context/README.md (already in CLAUDE.md)."},
+				"include_standards": map[string]any{"type": "boolean", "description": "Add context/STANDARDS.md (TDD, clean code, contracts, migrations, security…). Use when planning or writing code; skip for questions."},
 			}, "services"),
 			Annotations: withTitle(read, "Load service context"),
 			Handler: func(raw json.RawMessage) (string, error) {
@@ -90,11 +91,12 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 					Files         []string `json:"files"`
 					IncludeGlobal *bool    `json:"include_global"`
 					SkipRules     bool     `json:"skip_rules"`
+					Standards     bool     `json:"include_standards"`
 				}](raw)
 				if err != nil {
 					return "", err
 				}
-				return ws.LoadContext(workspace.LoadOptions{Services: a.Services, Files: a.Files, IncludeGlobal: a.IncludeGlobal, SkipRules: a.SkipRules})
+				return ws.LoadContext(workspace.LoadOptions{Services: a.Services, Files: a.Files, IncludeGlobal: a.IncludeGlobal, SkipRules: a.SkipRules, Standards: a.Standards})
 			},
 		},
 		{
@@ -151,23 +153,32 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 		},
 		{
 			Name:        "end_task",
-			Description: "Finish a task: move one of today's tasks from temp.md to the top of this month's log, as the given summary bullets (or as written if no summary). temp.md returns to '(none active)' when no tasks remain. Update architecture/features/database docs separately if the work changed them.",
+			Description: "Finish a task that is fully done, in every service it touched: write it to the top of each service's monthly log (a short summary first, then all the details from temp.md: goal, inputs, plan, checkpoints, decisions) and clear it from each temp.md, which returns to '(none active)' when no task is left for today. Update architecture/features/database docs separately if the work changed them.",
 			InputSchema: obj(map[string]any{
-				"service": str("Service name."),
-				"title":   str("Which of today's tasks (part of its title). Omit for the latest."),
-				"summary": strs("Condensed log bullets: what changed, where, why, status."),
-			}, "service"),
+				"services": strs("Every service the task touched. Use this for multi-service tasks."),
+				"service":  str("A single service (same as services with one name)."),
+				"title":    str("Which of today's tasks (part of its title). Omit for the latest."),
+				"summary":  strs("Short summary bullets: what changed, where, why, status. All details from temp.md are kept below them."),
+			}),
 			Annotations: withTitle(writeAppend, "End task"),
 			Handler: func(raw json.RawMessage) (string, error) {
 				a, err := decode[struct {
-					Service string   `json:"service"`
-					Title   string   `json:"title"`
-					Summary []string `json:"summary"`
+					Service  string   `json:"service"`
+					Services []string `json:"services"`
+					Title    string   `json:"title"`
+					Summary  []string `json:"summary"`
 				}](raw)
 				if err != nil {
 					return "", err
 				}
-				return ws.EndTask(workspace.EndInput{Service: a.Service, Title: a.Title, Summary: a.Summary})
+				svcs := a.Services
+				if a.Service != "" {
+					svcs = append([]string{a.Service}, svcs...)
+				}
+				if len(svcs) == 0 {
+					return "", fmt.Errorf("pass services (every service the task touched) or service")
+				}
+				return ws.EndTaskIn(svcs, a.Title, a.Summary)
 			},
 		},
 		{

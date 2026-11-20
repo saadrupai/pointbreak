@@ -2,6 +2,10 @@
 
 **Shared memory and a one-command workflow for AI agents in microservice teams.**
 
+[![ci](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml/badge.svg)](https://github.com/saadrupai/pointbreak/actions/workflows/ci.yml) · MIT · Go, zero dependencies · v0.3.0
+
+Pointbreak grew out of daily use: the author runs this structure every working day on a production microservice codebase, where it keeps the work tracked by service, branch and date, holds context across sessions and cuts down repeated exploration. This repo turns that habit into a spec, templates, commands and tools any team can use.
+
 AI coding agents forget your system every session. In a microservice codebase that's expensive: the agent rediscovers each service, misses the consumers of an event, and edits code in the wrong layer. Pointbreak gives every service a small, plain-markdown memory and gives the agent one command to start real work across services:
 
 ```
@@ -24,6 +28,7 @@ Without shared memory, every session starts by crawling repos: directory listing
 Prompt caching makes repeated input much cheaper, but only when the start of the prompt stays the same. Pointbreak keeps it stable:
 
 - `/pointbreak-setup` imports the team rules into your workspace `CLAUDE.md` (`@context/README.md`), so they sit in the fixed start of every session, where caching applies.
+- The rules loaded every turn are kept slim (about 7 KB). The full engineering standards live in `context/STANDARDS.md` and load only when planning or building code.
 - `load_context` always returns files in the same order (rules, system map, then each service's architecture, database, features, task, log). Same task, same bytes, same cache prefix.
 - The large files (`architecture.md`, `database.md`, `features.md`) change rarely. The parts that change every day (`temp.md`, the current log) are small and come last, so a day of edits doesn't invalidate the big stable block in front of them.
 
@@ -33,8 +38,12 @@ Prompt caching makes repeated input much cheaper, but only when the start of the
 - **Across people:** a teammate picking up your branch reads the same memory you wrote.
 - **Across services:** `global-architecture.md` keeps the calls, events and queues between services in one place, so a change in one repo is checked against every consumer.
 
-### 4. Safe by default
-- Plans are approved before any code changes; the team picks per-change or per-plan review.
+### 4. Engineering standards built in
+`/pointbreak-setup` installs team rules that every agent session follows: test-driven development (failing test first, then code, then refactor), clean code, layered design, wrapped and typed errors, backward-compatible APIs and events, idempotent writes and consumers, safe migrations on large tables, security, observability, timeouts and retries, typed config, the testing pyramid, and a review checklist the agent runs before saying a task is done. Teams can switch any standard off in one settings row.
+
+### 5. Safe by default
+- Plans are approved before any code changes. Then **every single file write** is shown as a diff with what changed and why, and written only after you approve that file — tests, migrations and config included. Approving the plan approves no file.
+- **Enforced, not just asked for:** the plugin's pre-write hook makes Claude Code ask before any write outside `context/`, even when edits would otherwise be auto-accepted.
 - No commits, pushes, resets or branch switches unless asked. Other branches are read with `git show`, never checked out.
 - Secret files are never read. Context files hold names, never values.
 - Every write stays inside `context/`. Applied migrations are never edited.
@@ -91,7 +100,7 @@ The `pointbreak-mcp` server (Go, standard library only, single binary) exposes t
 
 ### Database docs that keep themselves current
 
-`sync_database` replays a service's migrations (golang-migrate, goose, plain SQL) or reads its Prisma schema and writes the result into `database.md`: every table with columns, types, nulls, defaults, keys, indexes, foreign keys and enums, plus a migration log, newest first. `ALTER`, `RENAME` and `DROP` are applied in order, so the doc shows the schema as it stands today.
+`sync_database` replays a service's migrations (golang-migrate, goose, Flyway, plain SQL) or reads its Prisma schema and writes the result into `database.md`: every table with columns, types, nulls, defaults, keys, indexes, foreign keys and enums, plus a migration log, newest first. `ALTER`, `RENAME` and `DROP` are applied in order, so the doc shows the schema as it stands today.
 
 - **No database connection, ever.** It reads migration files only. No credentials, no drivers, nothing on the network. A test fails the build if a database or network package is ever imported.
 - **Human notes are safe.** Generated content lives between markers; ownership notes, data notes and anything else you write stay as written.
@@ -139,6 +148,9 @@ Point the client at `pointbreak-mcp` over stdio. It finds the workspace by walki
 
 ## Status and roadmap
 
+Current release: **v0.3.0** ([changelog](CHANGELOG.md)). Contributions welcome: [CONTRIBUTING.md](CONTRIBUTING.md) · security: [SECURITY.md](SECURITY.md).
+
+
 | Phase | What | Status |
 |---|---|---|
 | 1 | Context spec, templates, `/pointbreak` and `/pointbreak-setup`, example workspace, init script | ✅ |
@@ -159,7 +171,7 @@ go build -o bin/pointbreak-mcp ./cmd/pointbreak-mcp
 | `templates/context/` | Templates (embedded in the binary) |
 | `commands/` | `/pointbreak` and `/pointbreak-setup` |
 | `skills/pointbreak/` | The skill that applies the workflow whenever you work in a Pointbreak workspace |
-| `hooks/` | Session-start hook |
+| `hooks/` | Session-start hook and pre-write approval hook |
 | `.claude-plugin/` | Plugin manifest, marketplace entry, icon |
 | `.mcp.json`, `scripts/mcp-launch.sh` | Starts the MCP server from the plugin |
 | `internal/workspace/` | Reading and writing `context/` |

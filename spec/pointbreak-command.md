@@ -61,7 +61,7 @@ Everything that describes the work. Each token is classified:
 
 1. **Parse.** Echo back one short line per repo: repo, branch, and the inputs found. Stop and ask only if a repo name doesn't exist.
 2. **Date.** Get today's date from the shell.
-3. **Conventions.** Read `context/README.md`, including the team settings (review mode, ticket system, contract source).
+3. **Conventions.** Read `context/README.md`, including the approval rules and team settings (ticket system, contract source).
 4. **Context.** For each repo, read `architecture.md`, `database.md`, `features.md`, `temp.md` and the newest log. If there are two or more repos, or a contract is involved, read `global-architecture.md`. A repo with no context folder gets one created from the template first (repo code is only read, never changed, for this).
 5. **Branches.** For each repo:
    - Requested branch = current branch → read the working tree.
@@ -79,8 +79,8 @@ Everything that describes the work. Each token is classified:
    - Tests to add or update
    - Risks and open questions
 10. **Approve.** Show a short plan summary and the open questions. Wait for approval.
-11. **Build.** Implement following the team's review mode (`per-change` or `per-plan`). Write tests with the code. Run them. Keep `temp.md` updated at each meaningful step.
-12. **Hand back.** Summarise what was done, test results, and anything left. Suggest `/pointbreak end` when the work is merged or paused for the day.
+11. **Build.** One file at a time, tests first: show the exact change (new file or diff) and what changed and why, wait for an explicit "approved" / "okay" for that file, then write it. Approving the plan or saying "go on" approves no file. Run the tests. Keep `temp.md` updated at each meaningful step.
+12. **Hand back.** Summarise what was done, test results, and anything left. Suggest `/pointbreak end` when the work is fully done: it writes the summary and all details into the log of every service the task touched and clears their `temp.md`.
 
 ## What it never does
 - Commit, push, rebase, reset or delete branches without being asked.

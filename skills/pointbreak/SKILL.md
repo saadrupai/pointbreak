@@ -9,7 +9,7 @@ The workspace root holds one directory per service repo and a `context/` folder:
 
 ## Before touching code
 
-1. Follow `context/README.md` — it holds the team's review mode, git rules and secret files.
+1. Follow `context/README.md` — it holds the team's approval rules, git rules and secret files.
 2. Load memory for the services involved, in one call when the Pointbreak MCP server is connected:
    `load_context(services: [...], skip_rules: true if CLAUDE.md already imports context/README.md)`.
    Otherwise read the same files directly. For a schema-only question, pass `files: ["database.md"]`.
@@ -19,9 +19,10 @@ The workspace root holds one directory per service repo and a `context/` folder:
 ## Doing the work
 
 - Start with `/pointbreak <repos> [branches] [inputs…]`, or call `start_task` per service.
-- Write the plan into `temp.md` (`save_progress` with `plan`), get approval, then build following the review mode.
+- Before planning or writing code, read `context/STANDARDS.md` (or `load_context(..., include_standards: true)`) and follow it: tests first (red, green, refactor), clean code, layering, wrapped errors, backward-compatible contracts, safe migrations, no secrets in logs, timeouts and idempotent retries.
+- Write the plan into `temp.md` (`save_progress` with `plan`) and get it approved. Then write **one file at a time**: show the diff, say what changed and why, and wait for an explicit "approved" / "okay" for that file before writing it. Approving the plan, or "go on", approves no file. No exceptions, tests included.
 - Checkpoint at meaningful steps (`save_progress` with `done` / `next`). The plan in `temp.md` must survive the chat being compacted or another agent taking over.
-- Finish with `end_task` (short summary bullets) and update `architecture.md`, `features.md` or `database.md` if the work changed what they describe.
+- When the task is fully done, finish with `end_task(services: [every service it touched], summary: [...])`: the log gets the summary and all details, and each `temp.md` is cleared and update `architecture.md`, `features.md` or `database.md` if the work changed what they describe.
 
 ## Rules that always hold
 

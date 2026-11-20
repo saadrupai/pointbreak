@@ -1,6 +1,6 @@
 {
   "name": "pointbreak",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shared memory and a one-command workflow for AI agents in microservice teams: per-service context files, /pointbreak and /pointbreak-setup, a session-start hook and a Go MCP server.",
   "author": {
     "name": "Saad Rupai",

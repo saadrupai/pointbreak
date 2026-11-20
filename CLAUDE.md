@@ -74,8 +74,22 @@ An open-core product for backend teams in microservice workspaces: a `context/` 
 - No DB connection: sync reads migration files / schema.prisma only. `guard_test.go` fails if any non-test code imports database/sql, net, drivers or ORMs. Docs and templates say "migrations only" (DB-access setting removed).
 - Edge cases covered: idempotent re-sync, human text kept, hand-written doc needs replace_sections, dry run, broken markers refused, path escapes rejected, CRLF, goose Up/Down, MySQL MODIFY/CHANGE/RENAME TABLE, renames/drops propagate to FKs and indexes, enum ADD VALUE BEFORE/AFTER, dollar-quoted bodies, Prisma @map/@relation/@@index, shared DB for some/all services, pointer blocks refreshed not duplicated, code-scan ignores vendor/migrations/plain words, load_context dedupes services and shared docs, logs without `---` stay newest-first, future-dated temp entries kept.
 
+## v0.3.0 (2026-11-20)
+- Engineering standards: `templates/context/README.md` section 7 (TDD 7.1 … review checklist 7.12), wired into /pointbreak, setup, skill, README, Kitebox.
+- Owner rule (strict): after the plan is approved and the user says "go on"/"start", EVERY repository file write (code, tests, migrations, config, docs) is shown first (full new file or diff) with what changed and why, and written only after an explicit "approved"/"okay" for that file. One file per approval, no batching, no exceptions. Only `context/` memory files are outside the rule. The old per-plan review mode and the "tests without approval" exception are removed everywhere.
+- Owner rule: when a task is fully done, end it in every service it touched: log gets a short summary plus ALL details from temp.md; temp.md cleared. Code: `EndTask` keeps every line under "- Summary:"; `EndTaskIn` ends across services; `end_task` tool takes `services`. 60 tests pass.
+- Benchmark `bench/` (fixture `make_fixture.py`, runner `run.py`): first run hit the owner's 5-hour usage limit (resets 1:40 Asia/Dhaka). Completed runs (Sonnet, repeat 0): t1 impact — baseline 7/7, 136.5k input tokens, 16 turns, $0.139, 28s; pointbreak 7/7, 117.0k, 10 turns, $0.132, 25s. t2 schema — baseline 7/7, 64.3k, $0.073; pointbreak 7/7, 78.8k, $0.038 (more tokens but cheaper: cache reads). t3 flow — baseline 10/10, 209.2k, 33 turns, $0.198, 46s; pointbreak errored (limit). Rerun the full set after the reset: `cd bench && python3 run.py --repeats 2`. Note the CLAUDE.md import loads the whole rules file every turn; it grew with standards and approval rules, which costs tokens on small tasks — consider a slim rules option.
+
+## Done for v0.3.0 (items 1-3 of the owner's list)
+- Slim rules: `context/README.md` 13.1 KB → 7.3 KB (loaded every turn); standards moved to `context/STANDARDS.md` (6.1 KB), loaded via `load_context(include_standards: true)` or when planning/building. Init and init.sh create it (13 files for 2 services).
+- Flyway: `V1__x.sql`, `V1.1__`, `R__` (applied last), `U` ignored, numeric part ordering (1.2 < 1.10), default folder `src/main/resources/db/migration`.
+- Enforcement: `hooks/pre-write.sh` (PreToolUse on Edit|Write|MultiEdit|NotebookEdit) returns permissionDecision "ask" for any write outside `<ws>/context/` inside a Pointbreak workspace; paths with `..` always ask; silent elsewhere.
+- Basics: `.github/workflows/ci.yml` (gofmt, vet, race tests on Go 1.23 + stable, build, bash -n, shellcheck, JSON), CHANGELOG.md, CONTRIBUTING.md, SECURITY.md, version 0.3.0 in plugin.json, marketplace.json, main.go. README: daily-use origin (author uses it daily at work; no employer named), slim rules, enforcement, Flyway.
+- `bench/results/` is gitignored until the full benchmark is rerun after the usage limit resets.
+
 ## Next steps, in order
-1. Phase 5: claim on m8ven.ai, Agensi listing, LinkedIn post — ask the owner before each.
+1. Launch (owner said go, 2026-11-20): push + tag v0.3.0, check CI, M8ven claim, Agensi listing (free). LinkedIn post: show the draft and wait for the owner's approval before posting.
+2. Rerun the benchmark after the usage reset, publish method + results.
 2. Phase 4: `sync_database` tool — parse migrations (golang-migrate `*.up.sql`, goose, Prisma) into `database.md` without touching "Data notes".
 3. Phase 5: first commit (owner must ask), GitHub repo `saadrupai/pointbreak`, claim on m8ven.ai (badge in README), Agensi listing (free core), LinkedIn post. Add the listings to the owner's published-listings notes.
 

@@ -16,6 +16,7 @@ copy_if_missing() { [ -e "$2" ] || { mkdir -p "$(dirname "$2")"; cp "$1" "$2"; e
 
 echo "Pointbreak: setting up $ctx"
 copy_if_missing "$tpl/README.md" "$ctx/README.md"
+copy_if_missing "$tpl/STANDARDS.md" "$ctx/STANDARDS.md"
 copy_if_missing "$tpl/global-architecture.md" "$ctx/global-architecture.md"
 
 if [ "$#" -eq 0 ]; then

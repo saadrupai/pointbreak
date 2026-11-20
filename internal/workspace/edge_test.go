@@ -112,8 +112,8 @@ func TestInitWithNoReposAndMissingRules(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(created) != 2 {
-		t.Errorf("no repos: only README and system map, got %v", created)
+	if len(created) != 3 {
+		t.Errorf("no repos: only README, STANDARDS and system map, got %v", created)
 	}
 	ws2 := kitebox(t)
 	if err := os.Remove(filepath.Join(ws2.Root, "context", "README.md")); err != nil {

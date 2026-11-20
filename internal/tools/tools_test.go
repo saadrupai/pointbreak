@@ -101,7 +101,7 @@ func TestEndToEndOverJSONRPC(t *testing.T) {
 	}
 
 	text, isErr := toolText(t, call(t, s, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"init_workspace","arguments":{}}}`))
-	if isErr || !strings.Contains(text, "Created 12 files") {
+	if isErr || !strings.Contains(text, "Created 13 files") {
 		t.Fatalf("init_workspace: %s", text)
 	}
 
@@ -118,7 +118,7 @@ func TestEndToEndOverJSONRPC(t *testing.T) {
 		t.Fatalf("end_task: %s", text)
 	}
 	log, err := os.ReadFile(filepath.Join(root, "context", "orders-svc", "logs", "2026-11.md"))
-	if err != nil || !strings.Contains(string(log), "### branch: main — Refunds\n- done") {
+	if err != nil || !strings.Contains(string(log), "### branch: main — Refunds\n- Summary:\n  - done\n- Goal: g") {
 		t.Errorf("log after end_task:\n%s", log)
 	}
 }

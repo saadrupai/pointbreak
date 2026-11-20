@@ -72,7 +72,7 @@ Shared by `temp.md` and logs.
 
 - File name: `logs/YYYY-MM.md`, using the date of the work.
 - New day headers go directly under the `---` line, above older days.
-- A task block in a log is a condensed summary of its `temp.md` entry: what changed, where, why, status. No plans, no open questions unless still open.
+- A task block in a log starts with a short summary (what changed, where, why, status), followed by all the details from its `temp.md` entry: goal, inputs, plan, checkpoints, decisions, files and migrations changed, tests and follow-ups. It is written to the log of every service the task touched.
 
 ## `database.md`
 

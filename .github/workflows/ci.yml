@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.23", "stable"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: gofmt
+        run: test -z "$(gofmt -l $(git ls-files '*.go'))"
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test -race -count=1 ./...
+      - name: build
+        run: go build -o /tmp/pointbreak-mcp ./cmd/pointbreak-mcp && /tmp/pointbreak-mcp --version
+
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shell syntax
+        run: for f in hooks/*.sh scripts/*.sh; do bash -n "$f"; done
+      - name: shellcheck
+        run: shellcheck -S warning hooks/*.sh scripts/*.sh
+      - name: plugin json
+        run: for f in .claude-plugin/*.json .mcp.json hooks/hooks.json; do python3 -m json.tool "$f" > /dev/null; done

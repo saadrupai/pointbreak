@@ -241,3 +241,41 @@ func TestDetect(t *testing.T) {
 		t.Error("empty repo should report no migrations")
 	}
 }
+
+func TestFlyway(t *testing.T) {
+	repo := writeFiles(t, map[string]string{
+		"src/main/resources/db/migration/V1__init.sql":         "CREATE TABLE accounts (id BIGINT PRIMARY KEY, email VARCHAR(255) NOT NULL);",
+		"src/main/resources/db/migration/V1.1__add_name.sql":   "ALTER TABLE accounts ADD COLUMN name VARCHAR(100);",
+		"src/main/resources/db/migration/V1.10__add_phone.sql": "ALTER TABLE accounts ADD COLUMN phone VARCHAR(20);",
+		"src/main/resources/db/migration/V1.2__rename.sql":     "ALTER TABLE accounts RENAME COLUMN name TO full_name;",
+		"src/main/resources/db/migration/V2__orders.sql":       "CREATE TABLE orders (id BIGINT PRIMARY KEY, account_id BIGINT REFERENCES accounts(id));",
+		"src/main/resources/db/migration/R__views.sql":         "CREATE OR REPLACE VIEW active_accounts AS SELECT * FROM accounts;",
+		"src/main/resources/db/migration/U2__undo_orders.sql":  "DROP TABLE orders;",
+	})
+	dir, err := Detect(repo)
+	if err != nil || dir != "src/main/resources/db/migration" {
+		t.Fatalf("Detect = %q, %v", dir, err)
+	}
+	s, err := Load(filepath.Join(repo, dir), "accounts-svc/"+dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Tool != "flyway" {
+		t.Errorf("tool = %s", s.Tool)
+	}
+	var order []string
+	for _, m := range s.Migrations {
+		order = append(order, m.File)
+	}
+	want := "V1__init.sql,V1.1__add_name.sql,V1.2__rename.sql,V1.10__add_phone.sql,V2__orders.sql,R__views.sql"
+	if got := strings.Join(order, ","); got != want {
+		t.Errorf("order:\n got %s\nwant %s", got, want)
+	}
+	a := s.Tables["accounts"]
+	if a.col("full_name") == nil || a.col("name") != nil || a.col("phone") == nil {
+		t.Error("versions 1.1 < 1.2 < 1.10 must apply in numeric order")
+	}
+	if s.Tables["orders"] == nil {
+		t.Error("undo (U) migrations must be ignored")
+	}
+}

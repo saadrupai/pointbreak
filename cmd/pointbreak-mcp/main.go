@@ -14,7 +14,7 @@ import (
 	"github.com/saadrupai/pointbreak/internal/workspace"
 )
 
-var version = "0.1.0"
+var version = "0.3.0"
 
 const instructions = "Pointbreak keeps per-service memory for a microservice workspace in context/. " +
 	"Start work with load_context for the services involved, then start_task in each. " +

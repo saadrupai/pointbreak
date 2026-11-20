@@ -16,6 +16,7 @@ var Candidates = []string{
 	"migrations", "db/migrations", "database/migrations", "sql/migrations", "migration",
 	"internal/db/migrations", "internal/database/migrations", "internal/migrations",
 	"pkg/db/migrations", "schema/migrations", "db/migrate/sql", "sql",
+	"src/main/resources/db/migration", "db/migration", // Flyway defaults
 }
 
 // PrismaCandidates are where a Prisma schema usually lives.
@@ -25,6 +26,9 @@ const maxFile = 4 << 20
 
 var (
 	reMigFile = regexp.MustCompile(`^(\d+)[_-](.+?)(\.up)?\.sql$`)
+	reFlywayV = regexp.MustCompile(`^V(\d+(?:[._]\d+)*)__(.+)\.sql$`)
+	reFlywayR = regexp.MustCompile(`^R__(.+)\.sql$`)
+	reFlywayU = regexp.MustCompile(`^U\d+(?:[._]\d+)*__.+\.sql$`)
 	reGooseUp = regexp.MustCompile(`(?i)--\s*\+goose\s+up`)
 	reGooseDn = regexp.MustCompile(`(?i)--\s*\+goose\s+down`)
 	reGooseSB = regexp.MustCompile(`(?im)^\s*--\s*\+goose\s+statement(begin|end)\s*$`)
@@ -86,21 +90,30 @@ func Load(path, label string) (*Schema, error) {
 	}
 	type file struct {
 		name, version, title string
-		n                    uint64
+		key                  []uint64 // version parts, compared in order
+		repeatable           bool     // Flyway R__ files apply after all versioned ones
 	}
 	var files []file
 	tool := "sql"
 	goose := false
 	for _, e := range entries {
 		name := e.Name()
-		if e.IsDir() || !strings.HasSuffix(name, ".sql") || strings.HasSuffix(name, ".down.sql") {
+		if e.IsDir() || !strings.HasSuffix(name, ".sql") || strings.HasSuffix(name, ".down.sql") || reFlywayU.MatchString(name) {
 			continue
 		}
 		f := file{name: name, title: strings.TrimSuffix(name, ".sql")}
-		if g := reMigFile.FindStringSubmatch(name); g != nil {
-			f.version, f.title = g[1], g[2]
-			f.n, _ = strconv.ParseUint(g[1], 10, 64)
-			if g[3] != "" {
+		switch {
+		case reFlywayV.MatchString(name):
+			g := reFlywayV.FindStringSubmatch(name)
+			f.version, f.title, f.key = g[1], g[2], versionKey(g[1])
+			tool = "flyway"
+		case reFlywayR.MatchString(name):
+			f.title, f.repeatable = reFlywayR.FindStringSubmatch(name)[1], true
+			tool = "flyway"
+		case reMigFile.MatchString(name):
+			g := reMigFile.FindStringSubmatch(name)
+			f.version, f.title, f.key = g[1], g[2], versionKey(g[1])
+			if g[3] != "" && tool != "flyway" {
 				tool = "golang-migrate"
 			}
 		}
@@ -118,10 +131,16 @@ func Load(path, label string) (*Schema, error) {
 		return nil, fmt.Errorf("no .sql migrations in %s", label)
 	}
 	sort.SliceStable(files, func(i, j int) bool {
-		if files[i].version != "" && files[j].version != "" && files[i].n != files[j].n {
-			return files[i].n < files[j].n
+		a, b := files[i], files[j]
+		if a.repeatable != b.repeatable {
+			return b.repeatable
 		}
-		return files[i].name < files[j].name
+		if len(a.key) > 0 && len(b.key) > 0 {
+			if c := compareKeys(a.key, b.key); c != 0 {
+				return c < 0
+			}
+		}
+		return a.name < b.name
 	})
 
 	s := New(tool, label)
@@ -175,4 +194,26 @@ func dateFromVersion(v string) string {
 		return ""
 	}
 	return y + "-" + m + "-" + d
+}
+
+// versionKey splits "1.10_2" into [1 10 2] so versions compare numerically part by part.
+func versionKey(v string) []uint64 {
+	var key []uint64
+	for _, p := range strings.FieldsFunc(v, func(r rune) bool { return r == '.' || r == '_' }) {
+		n, _ := strconv.ParseUint(p, 10, 64)
+		key = append(key, n)
+	}
+	return key
+}
+
+func compareKeys(a, b []uint64) int {
+	for i := 0; i < len(a) && i < len(b); i++ {
+		if a[i] != b[i] {
+			if a[i] < b[i] {
+				return -1
+			}
+			return 1
+		}
+	}
+	return len(a) - len(b)
 }

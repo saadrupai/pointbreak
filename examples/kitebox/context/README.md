@@ -43,16 +43,16 @@ Read only what the task needs from the repos themselves. The context files exist
 3. Write a stub in each involved service's `temp.md` with the goal, before planning anything.
 4. Read the requirement sources (ticket, doc, image, prompt) and the relevant code.
 5. Write the plan into the same `temp.md` entry: files to change per repo, approach, tests, risks, and cross-service impact.
-6. Ask for approval. Do not change repository code before the plan is approved.
+6. Ask for approval of the plan. Then build one file at a time, each shown as a diff and approved before it is written (section 6, rule 2).
 
 **During**
 - Keep `temp.md` current at natural checkpoints: what is done, what is next, open questions.
 - If the plan changes, update it in `temp.md` and say so.
 
-**End**
-1. Summarise the `temp.md` entry into the top of `logs/<YYYY-MM>.md` (create the month file if it is missing).
+**End** — when the task is fully done (accepted, merged or closed), in **every service the task touched**:
+1. Write the task into the top of `logs/<YYYY-MM>.md` (create the month file if it is missing): a short summary first, then all the details from `temp.md` — goal, inputs, plan, what was done, decisions and why, files and migrations changed, tests, open follow-ups.
 2. Update `architecture.md`, `features.md` or `database.md` if the work changed what they describe.
-3. Reset `temp.md` to `(none active)`.
+3. Clear the task from `temp.md`. When no task is left for today, `temp.md` goes back to `(none active)`.
 
 **`temp.md` holds today only.** A second task on the same day goes under the same date header. On a new date, start the file fresh; yesterday's work is already in the log.
 
@@ -79,11 +79,17 @@ One `## YYYY-MM-DD` header per day. One `### branch: <branch> — <title>` block
 
 ## 6. Rules for changing code (mandatory)
 
-1. **Approval before writes.** No creating, editing or deleting repository files without approval. Files under `context/` are the agent's own memory and may be updated as part of the workflow above.
-2. **Review mode:** `per-change`.
-   - `per-change`: before each write, show the exact change (new file or diff) and a one-line reason, and wait for a yes. One write per yes.
-   - `per-plan`: once the plan is approved, implement it, then show a summary diff per file.
-3. **Tests.** Write or update unit tests for every change. Tests may be written without separate approval. Run them before saying a task is done, and report failures as they are.
+Before planning or writing code, also read `context/STANDARDS.md` (TDD, clean code, design, errors, contracts, migrations, security, observability, reliability, config, testing, review checklist). It is kept separate so everyday questions don't load it.
+
+
+1. **The plan comes first.** No repository file is created, edited, renamed or deleted before the plan in `temp.md` is approved.
+2. **Every file write needs its own approval — no exceptions.** Approving the plan, or saying "go on" / "start", approves no file. For each file, one at a time:
+   1. Show the exact change: the full content of a new file, a unified diff of an edit, or the path of a file to delete or rename.
+   2. Say what changed and why, in the reply (never as comments in the code).
+   3. Stop and wait. Write the file only after an explicit "approved", "okay", "yes" or "go ahead" for **that** file.
+   4. If the user asks for changes, show the revised diff and wait again.
+   This applies to every file in a repository: code, tests, migrations, config, docs, generated files. Never batch several files behind one approval, and never write "just this small one" without it. The only files outside this rule are the agent's own memory in `context/` (`temp.md`, logs, service docs), which it keeps up to date as part of the workflow. With the Pointbreak plugin installed, a pre-write hook makes Claude Code ask before every other write, even in auto-accept modes; keep it installed.
+3. **Tests first.** Follow test-driven development (`context/STANDARDS.md` §1): failing test, then code, then refactor. Each test file goes through the same approval as any other file (rule 2). Run the full suite before saying a task is done, and report failures as they are.
 4. **Git.** Never commit, push, rebase, reset, force-push or delete branches unless asked. Never switch the branch of a repo with uncommitted changes. To read another branch, use `git show <branch>:<path>` instead of checking it out.
 5. **Secrets.** Never read `.env*`, `config.yml`, `*.pem`, key files, or anything listed under "Secret files" in a service's `architecture.md`. Read the example template instead.
 6. **Layering.** Follow the layering in the service's `architecture.md`. New code goes in the layer it belongs to.
@@ -98,9 +104,9 @@ When a repo exists in the workspace without a `context/<service>/` folder, creat
 
 | Setting | Value |
 |---|---|
-| Review mode | `per-change` |
 | Timezone for dates | `Asia/Dhaka` |
 | Ticket system | Jira (project key `ORD`) |
+| Standards switched off (`STANDARDS.md` sections) | none |
 | API contract source | `kitebox-proto` repo |
 
 Personal preferences (your git identity, model choice, tone) belong in your own agent settings, not in this shared folder.

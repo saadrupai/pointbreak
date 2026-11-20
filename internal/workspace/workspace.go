@@ -147,7 +147,7 @@ func (w *Workspace) Init(services []string) ([]string, error) {
 		b, err := fs.ReadFile(w.Templates, name)
 		return string(b), err
 	}
-	for _, f := range []string{"README.md", "global-architecture.md"} {
+	for _, f := range []string{"README.md", "STANDARDS.md", "global-architecture.md"} {
 		c, err := tpl(f)
 		if err != nil {
 			return created, err
@@ -210,6 +210,7 @@ type LoadOptions struct {
 	Files         []string // subset of ServiceFiles plus "log"; empty = all
 	IncludeGlobal *bool    // nil = automatic (two or more services)
 	SkipRules     bool     // true when context/README.md is already imported via CLAUDE.md
+	Standards     bool     // add context/STANDARDS.md (planning and building code)
 }
 
 // LoadContext concatenates the requested context files in a fixed, stable order:
@@ -253,6 +254,9 @@ func (w *Workspace) LoadContext(o LoadOptions) (string, error) {
 	}
 	if !o.SkipRules {
 		add(filepath.Join(ContextDir, "README.md"))
+	}
+	if o.Standards {
+		add(filepath.Join(ContextDir, "STANDARDS.md"))
 	}
 	global := len(o.Services) > 1
 	if o.IncludeGlobal != nil {

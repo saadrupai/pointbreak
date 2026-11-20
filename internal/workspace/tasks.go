@@ -316,14 +316,16 @@ func (w *Workspace) EndTask(in EndInput) (string, error) {
 		return "", err
 	}
 	block := trimBlank(d.lines[b[0]:b[1]])
+	// The log keeps everything: a short summary first, then every detail from temp.md.
 	entry := block
-	if len(in.Summary) > 0 {
-		entry = []string{block[0]}
-		for _, s := range in.Summary {
-			if s = strings.TrimSpace(s); s != "" {
-				entry = append(entry, ensureDash(s))
-			}
+	var summary []string
+	for _, s := range in.Summary {
+		if s = strings.TrimSpace(s); s != "" {
+			summary = append(summary, "  "+ensureDash(s))
 		}
+	}
+	if len(summary) > 0 {
+		entry = append(append([]string{block[0], "- Summary:"}, summary...), block[1:]...)
 	}
 	if err := w.appendToLog(in.Service, d.date, entry); err != nil {
 		return "", err
@@ -424,4 +426,33 @@ func collapseBlank(lines []string) []string {
 		out = append(out, l)
 	}
 	return out
+}
+
+// EndTaskIn ends the same task in several services (every service the task touched).
+// Each service is handled independently; the report lists what happened in each.
+func (w *Workspace) EndTaskIn(services []string, title string, summary []string) (string, error) {
+	if len(services) == 0 {
+		return "", errors.New("pass at least one service")
+	}
+	var lines []string
+	failed := 0
+	seen := map[string]bool{}
+	for _, svc := range services {
+		if seen[svc] {
+			continue
+		}
+		seen[svc] = true
+		msg, err := w.EndTask(EndInput{Service: svc, Title: title, Summary: summary})
+		if err != nil {
+			failed++
+			lines = append(lines, fmt.Sprintf("- %s: not ended: %v", svc, err))
+			continue
+		}
+		lines = append(lines, "- "+svc+": "+msg)
+	}
+	out := strings.Join(lines, "\n")
+	if failed == len(seen) {
+		return "", errors.New(out)
+	}
+	return out, nil
 }

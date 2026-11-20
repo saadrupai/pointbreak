@@ -21,17 +21,17 @@ Unless `--defaults` was passed, ask these in one question set (offer the default
 
 | Setting | Default |
 |---|---|
-| Review mode | `per-change` |
 | Timezone for dates | the machine's timezone |
 | Ticket system | none |
 | API contract source | detect (`proto/`, `*.proto`, `openapi*.yaml`, a shared contracts repo) |
+| Engineering standards | all on (clean code, TDD, design, errors, contracts, migrations, security, observability, reliability, config, test pyramid) — list any to switch off |
 | Database layout | each service has its own database / some services share one / all services share one |
 
 ## 3. Create the skeleton
 
 - If the Pointbreak MCP server is connected, call its `init_workspace` tool.
 - Otherwise create, without overwriting anything that exists:
-  `context/README.md`, `context/global-architecture.md`, and for each service `context/<svc>/{temp.md, architecture.md, features.md, database.md, logs/<YYYY-MM>.md}` from the Pointbreak templates.
+  `context/README.md`, `context/STANDARDS.md`, `context/global-architecture.md`, and for each service `context/<svc>/{temp.md, architecture.md, features.md, database.md, logs/<YYYY-MM>.md}` from the Pointbreak templates.
 - Write the chosen team settings into the table at the bottom of `context/README.md`.
 
 ## 4. Fill each service

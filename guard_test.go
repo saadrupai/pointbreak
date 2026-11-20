@@ -20,7 +20,7 @@ func TestNoDatabaseOrNetworkAccess(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() && (d.Name() == ".git" || d.Name() == "examples" || d.Name() == "bin") {
+		if d.IsDir() && (d.Name() == ".git" || d.Name() == "examples" || d.Name() == "bin" || d.Name() == "bench") {
 			return filepath.SkipDir
 		}
 		if d.IsDir() || !strings.HasSuffix(p, ".go") || strings.HasSuffix(p, "_test.go") {

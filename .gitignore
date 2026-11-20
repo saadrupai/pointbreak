@@ -2,3 +2,6 @@
 /bin/
 *.log
 .env
+bench/work/
+bench/work-bin/
+bench/results/
