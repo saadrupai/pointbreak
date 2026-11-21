@@ -70,7 +70,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 		},
 		{
 			Name:        "load_context",
-			Description: "Load the memory needed to work on one or more services in one call, in a fixed order: team rules, system map (automatic for 2+ services), then per service architecture, database, features, today's temp.md and the newest monthly log. Use skip_rules when context/README.md is already imported in CLAUDE.md, and files to load only what the task needs.",
+			Description: "Load the memory needed to work on one or more services in one call, in a fixed order: team rules, system map (automatic for 2+ services), then per service architecture, database, features, today's temp.md and the newest monthly log. A service whose repo has commits newer than its docs gets a 'docs may be out of date' warning first. Use skip_rules when context/README.md is already imported in CLAUDE.md, and files to load only what the task needs.",
 			InputSchema: obj(map[string]any{
 				"services":          strs("Service names, e.g. [\"orders-svc\", \"payments-svc\"]."),
 				"files":             strs("Subset of: architecture.md, database.md, features.md, temp.md, log. Omit for all."),
@@ -177,7 +177,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 		},
 		{
 			Name:        "task_status",
-			Description: "Show today's active tasks across all services, with each task's latest Next step, and flag stale entries from earlier days.",
+			Description: "Show today's active tasks across all services, with each task's latest Next step, and flag stale entries from earlier days. Also lists services whose docs may be out of date (repo commits newer than the docs).",
 			InputSchema: obj(map[string]any{}),
 			Annotations: mcp.Annotations{Title: "Task status", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler:     func(json.RawMessage) (string, error) { return ws.Status() },
@@ -232,7 +232,7 @@ func All(ws *workspace.Workspace) []mcp.Tool {
 		},
 		{
 			Name:        "impact",
-			Description: "Before changing a contract, find everything that depends on it: rows in the system map (calls, events, queues, with their section) and lines in every service's architecture, database and features docs that mention the term. Pass an event subject, RPC, endpoint, queue, table or field.",
+			Description: "Before changing a contract, find everything that depends on it: rows in the system map (calls, events, queues, with their section) and lines in every service's architecture, database and features docs that mention the term. Pass an event subject, RPC, endpoint, queue, table or field. It searches docs, not code: confirm consumers in code, and it lists services whose docs may be out of date.",
 			InputSchema: obj(map[string]any{"term": str("e.g. order.created, Payments.Refund, refunds, notify:send.")}, "term"),
 			Annotations: mcp.Annotations{Title: "Find impact of a change", ReadOnlyHint: true, DestructiveHint: false, IdempotentHint: true, OpenWorldHint: false},
 			Handler: func(raw json.RawMessage) (string, error) {

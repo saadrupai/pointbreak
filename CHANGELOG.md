@@ -2,6 +2,15 @@
 
 All notable changes to Pointbreak. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-11-21
+
+### Added
+- Drift warnings: when a service's repo has commits newer than its `architecture.md`, `database.md` or `features.md`, `load_context`, `task_status` and `impact` flag it ("docs may be out of date"), with the commit count and dates. Read-only `git log`; commits within 6 hours of a doc update are treated as the same work; services without their own repo are skipped.
+- Service template: the Gotchas section now prompts for source of truth, delivery guarantees, ordering, things that already exist, and traps. The rules and `/pointbreak` read it before planning.
+
+### Changed
+- `impact` docs and tool description now say exactly what it searches (system map, shared-DB docs, every service's docs) and that it searches docs, not code.
+
 ## [0.3.0] — 2026-11-20
 
 ### Added

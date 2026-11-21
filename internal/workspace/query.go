@@ -43,10 +43,11 @@ func (w *Workspace) Status() (string, error) {
 			}
 		}
 	}
+	drift := driftSection(w.Drift())
 	if active == 0 {
-		return fmt.Sprintf("No active tasks today (%s) across %d services.", w.today(), len(svcs)), nil
+		return fmt.Sprintf("No active tasks today (%s) across %d services.", w.today(), len(svcs)) + drift, nil
 	}
-	return fmt.Sprintf("Active tasks (%s):\n%s", w.today(), b.String()), nil
+	return fmt.Sprintf("Active tasks (%s):\n%s", w.today(), strings.TrimRight(b.String(), "\n")) + drift + "\n", nil
 }
 
 // SearchLogs finds log lines containing query (case-insensitive), newest month first.
@@ -187,10 +188,11 @@ func (w *Workspace) Impact(term string) (string, error) {
 			fmt.Fprintf(&b, "%s:\n%s\n\n", svc, strings.Join(lines, "\n"))
 		}
 	}
+	drift := driftSection(w.Drift())
 	if n == 0 {
-		return fmt.Sprintf("%q does not appear in the system map or any service doc. If it should, the docs may be out of date.", term), nil
+		return fmt.Sprintf("%q does not appear in the system map or any service doc. If it should, the docs may be out of date.", term) + drift, nil
 	}
-	return fmt.Sprintf("%d mentions of %q. Every service listed is a candidate to check before changing it.\n\n%s", n, term, strings.TrimRight(b.String(), "\n")), nil
+	return fmt.Sprintf("%d mentions of %q. Every service listed is a candidate to check before changing it.\n\n%s", n, term, strings.TrimRight(b.String(), "\n")) + drift, nil
 }
 
 // ListServices reports registered services and repos that still need init_workspace.

@@ -36,6 +36,7 @@ func newWS(t *testing.T, now string, repos ...string) *Workspace {
 	ws := New(root, templates(t))
 	ws.Now = func() time.Time { return ts }
 	ws.Branch = func(string) string { return "feature/x" }
+	ws.CommitsSince = func(string, time.Time) []time.Time { return nil }
 	return ws
 }
 

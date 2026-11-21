@@ -87,6 +87,12 @@ An open-core product for backend teams in microservice workspaces: a `context/` 
 - Basics: `.github/workflows/ci.yml` (gofmt, vet, race tests on Go 1.23 + stable, build, bash -n, shellcheck, JSON), CHANGELOG.md, CONTRIBUTING.md, SECURITY.md, version 0.3.0 in plugin.json, marketplace.json, main.go. README: daily-use origin (author uses it daily at work; no employer named), slim rules, enforcement, Flyway.
 - `bench/results/` is gitignored until the full benchmark is rerun after the usage limit resets.
 
+## v0.4.0 (2026-11-21, merged to main and tagged)
+From launch feedback (LinkedIn: gotchas per service, stale docs; X: what impact scans):
+- Drift warnings: `internal/workspace/drift.go` (`Drift`, `driftFor`, `gitCommitsSince` via injectable `Workspace.CommitsSince`; read-only `git log`, `GIT_CEILING_DIRECTORIES` so it never walks into a parent repo; 6h grace; services without their own `.git` skipped). Shown in `task_status`, `load_context` (comment before the service's files) and `impact`. Tests in `drift_test.go`; `newWS` stubs CommitsSince.
+- Gotchas template prompts (source of truth, delivery, ordering, already exists, traps); rules, /pointbreak and skill read them.
+- README: impact row says what it searches; new "Docs that warn when they drift" section. CHANGELOG [Unreleased].
+
 ## Next steps, in order
 1. Launch done 2026-11-20: v0.3.0 pushed + tagged; M8ven Verified Publisher (badge in README, keep it); Agensi listing submitted free (in review). LinkedIn post published 2026-11-20: https://www.linkedin.com/feed/update/urn:li:activity:7529558785229565953/ (links to GitHub, M8ven, Agensi live listing https://www.agensi.io/skills/pointbreak-microservice-context-workflow).
 2. Rerun the benchmark after the usage reset, publish method + results.

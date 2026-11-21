@@ -2,7 +2,7 @@
 
 **Shared memory and a one-command workflow for AI agents in microservice teams.**
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/saadrupai-pointbreak-q4tjxg?v=36c805d833cfae7b25f2ab9843696263)](https://m8ven.ai/mcp/saadrupai-pointbreak-q4tjxg?s=readme) · MIT · Go, zero dependencies · v0.3.0 · [Also on Agensi](https://www.agensi.io/skills/pointbreak-microservice-context-workflow)
+[![M8ven Score](https://m8ven.ai/badge/mcp/saadrupai-pointbreak-q4tjxg?v=36c805d833cfae7b25f2ab9843696263)](https://m8ven.ai/mcp/saadrupai-pointbreak-q4tjxg?s=readme) · MIT · Go, zero dependencies · v0.4.0 · [Also on Agensi](https://www.agensi.io/skills/pointbreak-microservice-context-workflow)
 
 Pointbreak grew out of daily use: the author runs this structure every working day on a production microservice codebase, where it keeps the work tracked by service, branch and date, holds context across sessions and cuts down repeated exploration. This repo turns that habit into a spec, templates, commands and tools any team can use.
 
@@ -89,13 +89,13 @@ The `pointbreak-mcp` server (Go, standard library only, single binary) exposes t
 |---|---|---|
 | `init_workspace` | Create `context/` for every repo (never overwrites) | `context/` only |
 | `list_services` | Registered services and repos still missing context | no |
-| `load_context` | Rules, system map and service memory in one call, stable order | no |
+| `load_context` | Rules, system map and service memory in one call, stable order; warns when a service's docs are older than its code | no |
 | `start_task` | Add today's task block to a service's `temp.md` | `context/` only |
 | `save_progress` | Checkpoint Plan / Done / Next / Decisions / Questions | `context/` only |
 | `end_task` | Move a task to the top of the monthly log | `context/` only |
-| `task_status` | Today's tasks across services, stale entries flagged | no |
+| `task_status` | Today's tasks across services, stale entries and out-of-date docs flagged | no |
 | `search_logs` | Search past work across services | no |
-| `impact` | Every service and doc that depends on an event, RPC, table or field | no |
+| `impact` | Searches the system map, shared-DB docs and every service's architecture, database and features docs for an event, RPC, table or field, and says which file each hit is in | no |
 | `sync_database` | Rebuild a database doc from migration files: tables, columns, keys, indexes, relations, enums, migration log | `context/` only |
 
 ### Database docs that keep themselves current
@@ -106,6 +106,12 @@ The `pointbreak-mcp` server (Go, standard library only, single binary) exposes t
 - **Human notes are safe.** Generated content lives between markers; ownership notes, data notes and anything else you write stay as written.
 - **Shared databases.** Each service can have its own database, several services can share one, or all can use the same one. A shared database is documented once in `context/_db/<name>.md` (with which service's code touches which tables), and each service's `database.md` links to it. `load_context` brings the shared doc along automatically.
 - Statements it doesn't understand are listed under "check by hand" instead of being guessed.
+
+### Docs that warn when they drift
+
+Memory is only useful while it's true. When a service's repo has commits newer than its docs (`architecture.md`, `database.md`, `features.md`), `load_context`, `task_status` and `impact` say so: "payments-svc · 4 commits since its docs were last updated (2026-11-02)". The agent then checks the code before trusting those docs and updates them as part of the task. Commits made within 6 hours of a doc update count as the same work. It only reads `git log` in the service repo; nothing is written there.
+
+`impact` searches docs, not code, so treat its list as the place to start: the agent confirms real consumers in code before changing a contract.
 
 Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), so hosts can show what is safe to run.
 

@@ -70,4 +70,9 @@ Names only, never values.
 ```
 
 ## Gotchas
-- `<Things that surprised someone once.>`
+Facts the code doesn't make obvious, so the agent stops reinventing or breaking them. One line each; keep the ones that matter.
+- Source of truth: `<orders.status is canonical; the copy in search-svc is a read model>`
+- Delivery: `<order.paid is at-least-once: consumers must be idempotent (dedupe on event_id)>`
+- Ordering: `<events per order arrive in order; across orders they don't>`
+- Already exists: `<retries/backoff live in pkg/retry; don't add another>`
+- Traps: `<after editing queries/*.sql run sqlc generate; CI fails on a dirty diff>`

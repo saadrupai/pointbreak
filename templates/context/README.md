@@ -30,7 +30,7 @@ One folder under `context/` per service repo. The folder name matches the repo d
 When a session starts work on one or more services:
 
 1. Read this file.
-2. For each service involved, read `architecture.md`, `database.md`, `features.md`, `temp.md`, and the newest file in `logs/` (the lexically last `YYYY-MM.md`).
+2. For each service involved, read `architecture.md`, `database.md`, `features.md`, `temp.md`, and the newest file in `logs/` (the lexically last `YYYY-MM.md`). Respect the Gotchas in `architecture.md`. If a service is flagged "docs may be out of date" (its repo has commits newer than its docs), check the code before trusting those docs, and update them as part of the task.
 3. If more than one service is involved, or the task touches an API, event, queue or shared table, also read `global-architecture.md`.
 
 Read only what the task needs from the repos themselves. The context files exist so you don't have to rediscover the system each session.

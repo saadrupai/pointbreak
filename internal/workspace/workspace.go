@@ -36,11 +36,13 @@ type Workspace struct {
 	Templates fs.FS                       // rooted at templates/context
 	Now       func() time.Time            // injectable for tests
 	Branch    func(repoDir string) string // current git branch, "" if unknown
+	// CommitsSince returns commit times in repoDir after since; nil disables drift checks.
+	CommitsSince func(repoDir string, since time.Time) []time.Time
 }
 
 // New returns a Workspace using the real clock and git.
 func New(root string, templates fs.FS) *Workspace {
-	return &Workspace{Root: root, Templates: templates, Now: time.Now, Branch: gitBranch}
+	return &Workspace{Root: root, Templates: templates, Now: time.Now, Branch: gitBranch, CommitsSince: gitCommitsSince}
 }
 
 func gitBranch(dir string) string {
@@ -267,6 +269,9 @@ func (w *Workspace) LoadContext(o LoadOptions) (string, error) {
 	}
 	sharedSeen := map[string]bool{}
 	for _, svc := range o.Services {
+		if d, ok := w.driftFor(svc); ok {
+			fmt.Fprintf(&b, "<!-- pointbreak: docs may be out of date: %s -->\n\n", d)
+		}
 		for _, f := range ServiceFiles {
 			if all || want[f] {
 				add(filepath.Join(ContextDir, svc, f))

@@ -13,7 +13,7 @@ The workspace root holds one directory per service repo and a `context/` folder:
 2. Load memory for the services involved, in one call when the Pointbreak MCP server is connected:
    `load_context(services: [...], skip_rules: true if CLAUDE.md already imports context/README.md)`.
    Otherwise read the same files directly. For a schema-only question, pass `files: ["database.md"]`.
-3. Before changing an API, event, queue or shared table, run `impact(term)` and list every consumer in the plan.
+3. Before changing an API, event, queue or shared table, run `impact(term)` and list every consumer in the plan. `impact` searches docs, not code: confirm consumers in code, especially for services flagged "docs may be out of date".
 4. Check the log for prior work: `search_logs(query)` with the ticket key, table or event name.
 
 ## Doing the work
